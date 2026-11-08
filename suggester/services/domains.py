@@ -56,22 +56,11 @@ def _dns_fallback(domain: str) -> str:
         return UNKNOWN
 
 
-def check_many(
-    names: Iterable[str],
-    tlds: list[str],
-    workers: int = 12,
-    timeout: int = 6,
-) -> dict[str, dict[str, str]]:
-    """{name: {tld: status}} -- parallel mein."""
-    jobs = [(n, t) for n in names for t in tlds]
-    results: dict[str, dict[str, str]] = {n: {} for n in names}
-
-    def run(job):
-        n, t = job
-        slug = slugify(n)
-        return n, t, check_domain(f"{slug}.{t}", timeout=timeout) if slug else UNKNOWN
-
+def check_domains(domain_list: Iterable[str], workers: int = 12, timeout: int = 6) -> dict[str, str]:
+    """{domain: status}, parallel mein. Duplicate domains ek hi baar check hote hain."""
+    unique = list(dict.fromkeys(domain_list))
+    if not unique:
+        return {}
     with ThreadPoolExecutor(max_workers=workers) as pool:
-        for n, t, status in pool.map(run, jobs):
-            results[n][t] = status
-    return results
+        statuses = list(pool.map(lambda d: check_domain(d, timeout=timeout), unique))
+    return dict(zip(unique, statuses))

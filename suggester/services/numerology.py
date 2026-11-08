@@ -80,11 +80,17 @@ class AstroProfile:
     moolank: int
     bhagyank: int
     sun_sign: str
-    allowed_numbers: frozenset
+    allowed_numbers: frozenset   # Moolank ke anukul naam-ank (filter yahi hai)
+    strong_numbers: frozenset    # jo Moolank aur Bhagyank, dono se match karte hain
 
     @property
     def allowed_sorted(self) -> list:
         return sorted(self.allowed_numbers)
+
+    @property
+    def allowed_marked(self) -> list:
+        """[(number, is_strong)] template ke liye."""
+        return [(n, n in self.strong_numbers) for n in sorted(self.allowed_numbers)]
 
     @property
     def moolank_planet(self) -> str:
@@ -112,11 +118,18 @@ def sun_sign(dob: date) -> str:
 
 
 def build_profile(dob: date) -> AstroProfile:
+    """Moolank primary hai (naam usi ke anukul hona chahiye); Bhagyank se bhi
+    match ho to naam 'strong' maana jata hai aur score mein bonus milta hai.
+    (Dono ka intersection filter banane se bahut kam naam bachte the, aur union
+    se lagbhag har naam pass ho jata tha.)"""
     m, b = moolank(dob), bhagyank(dob)
-    allowed = frozenset(COMPATIBLE_NUMBERS[m] & COMPATIBLE_NUMBERS[b]) or frozenset(
-        COMPATIBLE_NUMBERS[m] | COMPATIBLE_NUMBERS[b]
-    )
-    return AstroProfile(m, b, sun_sign(dob), allowed)
+    allowed = frozenset(COMPATIBLE_NUMBERS[m])
+    strong = frozenset(COMPATIBLE_NUMBERS[m] & COMPATIBLE_NUMBERS[b])
+    return AstroProfile(m, b, sun_sign(dob), allowed, strong)
+
+
+def is_strong(name: str, profile: AstroProfile) -> bool:
+    return name_number(name) in profile.strong_numbers
 
 
 def is_compatible(name: str, profile: AstroProfile) -> bool:

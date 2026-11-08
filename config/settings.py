@@ -64,9 +64,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # --- App settings ---
 # Kaun se domain extensions check karne hain (pehla wala primary maana jayega)
 NAME_SUGGESTER = {
-    "TLDS": ["com", "in"],
-    "CANDIDATE_COUNT": 120,      # kitne naam generate karke check karne hain
+    "TLDS": ["com", "in", "co", "app"],  # pehla wala primary: .com taken ho to naam sirf variation ke saath dikhta hai
+    "CANDIDATE_COUNT": 150,      # kitne naam generate karke check karne hain
     "MAX_RESULTS": 20,           # user ko kitne dikhane hain
+    "EXTRA_TLD_LIMIT": 30,       # top itne naamo ke liye baaki TLDs check hote hain
+    "ALT_LIMIT": 15,             # .com taken wale itne naamo ke variations check hote hain
     "DOMAIN_CHECK_WORKERS": 12,  # parallel RDAP checks
     "DOMAIN_CHECK_TIMEOUT": 6,   # seconds
 }

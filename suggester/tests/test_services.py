@@ -9,7 +9,8 @@ from suggester.services import domains, generator, numerology, pipeline
 
 CFG = {
     "TLDS": ["com", "in"], "CANDIDATE_COUNT": 80, "MAX_RESULTS": 10,
-    "DOMAIN_CHECK_WORKERS": 4, "DOMAIN_CHECK_TIMEOUT": 2
+    "EXTRA_TLD_LIMIT": 30, "ALT_LIMIT": 15,
+    "DOMAIN_CHECK_WORKERS": 4, "DOMAIN_CHECK_TIMEOUT": 2,
 }
 
 
@@ -39,6 +40,14 @@ class NumerologyTests(unittest.TestCase):
             for month in (1, 6, 11):
                 p = numerology.build_profile(date(1990, month, day))
                 self.assertTrue(p.allowed_numbers)
+                self.assertTrue(p.strong_numbers <= p.allowed_numbers)
+
+    def test_moolank_is_primary_filter(self):
+        # 27-08-1995: Moolank 9 -> {1,2,3,9}; Bhagyank 5 -> {2,4,5,6}; strong = {2}
+        p = numerology.build_profile(date(1995, 8, 27))
+        self.assertEqual(p.allowed_numbers, frozenset({1, 2, 3, 9}))
+        self.assertEqual(p.strong_numbers, frozenset({2}))
+        self.assertEqual(p.allowed_marked, [(1, False), (2, True), (3, False), (9, False)])
 
 
 class DomainTests(unittest.TestCase):
@@ -82,25 +91,69 @@ class GeneratorTests(unittest.TestCase):
 
 
 class PipelineTests(unittest.TestCase):
-    def test_only_compatible_and_not_taken_and_sorted(self):
-        dob = date(1995, 8, 27)
-        profile = numerology.build_profile(dob)
+    DOB = date(1995, 8, 27)
 
-        def fake_check(names, tlds, **kw):
-            # pehle naam ka .com taken, baaki available
-            out = {n: {t: domains.AVAILABLE for t in tlds} for n in names}
-            if names:
-                out[names[0]]["com"] = domains.TAKEN
+    @staticmethod
+    def fake_check(taken_com_first=0, free_variants=True):
+        """Pehle `taken_com_first` .com naam taken, baaki sab available."""
+        state = {"seen_com": []}
+
+        def check(domain_list, **kw):
+            out = {}
+            for d in domain_list:
+                label, tld = d.split(".")
+                if tld == "com" and not label.startswith("get") and not label.endswith("hq"):
+                    state["seen_com"].append(d)
+                    out[d] = domains.TAKEN if len(state["seen_com"]) <= taken_com_first else domains.AVAILABLE
+                elif label.startswith("get") or label.endswith("hq"):
+                    out[d] = domains.AVAILABLE if free_variants else domains.TAKEN
+                else:
+                    out[d] = domains.AVAILABLE
             return out
+        return check
 
-        prof, results = pipeline.run_search(dob, "tech", [], "", CFG, check=fake_check)
+    def test_only_compatible_sorted_and_limited(self):
+        profile = numerology.build_profile(self.DOB)
+        _, results = pipeline.run_search(self.DOB, "tech", [], "", CFG, check=self.fake_check(3))
         self.assertTrue(results)
         for r in results:
             self.assertIn(r.name_number, profile.allowed_numbers)
-            self.assertNotEqual(r.domain_status["com"], domains.TAKEN)
         scores = [r.score for r in results]
         self.assertEqual(scores, sorted(scores, reverse=True))
         self.assertLessEqual(len(results), CFG["MAX_RESULTS"])
+
+    def test_strong_names_score_higher(self):
+        tlds = ["com", "in"]
+        st = {"com": domains.AVAILABLE, "in": domains.AVAILABLE}
+        self.assertGreater(
+            pipeline.score_suggestion("Zenora", st, tlds, strong=True),
+            pipeline.score_suggestion("Zenora", st, tlds, strong=False),
+        )
+
+    def test_taken_com_shown_only_with_free_variant(self):
+        # sab .com taken: variations khaali -> naam alt_domains ke saath dikhne chahiye
+        _, with_alt = pipeline.run_search(self.DOB, "tech", [], "", CFG, check=self.fake_check(10_000, True))
+        self.assertTrue(with_alt)
+        for r in with_alt:
+            self.assertEqual(r.domain_status["com"], domains.TAKEN)
+            self.assertTrue(r.alt_domains)
+            self.assertTrue(all(s == domains.AVAILABLE for _, s in r.alt_domains))
+        # sab .com taken aur variations bhi taken -> kuch nahi dikhna chahiye
+        _, none = pipeline.run_search(self.DOB, "tech", [], "", CFG, check=self.fake_check(10_000, False))
+        self.assertEqual(none, [])
+
+    def test_available_com_ranks_above_variation_only(self):
+        # pehle 5 .com taken, baaki available: available wale upar aane chahiye
+        _, results = pipeline.run_search(self.DOB, "tech", [], "", CFG, check=self.fake_check(5))
+        first_alt = next((i for i, r in enumerate(results) if r.alt_domains), len(results))
+        self.assertTrue(all(not r.alt_domains for r in results[:first_alt]))
+        self.assertTrue(all(r.domain_status["com"] == domains.AVAILABLE for r in results[:first_alt]))
+
+    def test_check_domains_dedupes_and_maps(self):
+        with mock.patch.object(domains, "check_domain", side_effect=lambda d, timeout=6: "available") as m:
+            out = domains.check_domains(["a.com", "a.com", "b.com"])
+        self.assertEqual(out, {"a.com": "available", "b.com": "available"})
+        self.assertEqual(m.call_count, 2)
 
 
 if __name__ == "__main__":

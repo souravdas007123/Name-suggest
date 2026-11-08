@@ -17,15 +17,24 @@ Poora app free hai: koi paid API ya key nahi lagti.
 python -m unittest suggester.tests.test_services -v
 ```
 
+## Features
+- Moolank (primary) se naam-ank filter; Bhagyank se bhi match ho to "strong" naam, score mein bonus
+- Domain check 2 phase mein: pehle .com, phir top naamo ke .in/.co/.app (`NAME_SUGGESTER` settings mein badal sakte hain)
+- .com taken ho to `getX.com` / `Xhq.com` option dikhata hai (agar khaali ho)
+- Har naam par Instagram / X / YouTube / trademark check ke links (automatic check nahi, sirf links)
+- Shortlist (is browser mein save), link copy, WhatsApp share, PDF / print
+- Result URL signed hai (guess nahi hota), isliye DOB private rehti hai lekin link share ho sakta hai
+- Poora free: koi paid API nahi
+
 ## Structure
 - `suggester/services/numerology.py`: Chaldean number, Moolank/Bhagyank, compatibility table (**astrologer se verify karein**)
 - `suggester/services/generator.py`: poori tarah rule-based naam (koi paid API nahi)
 - `suggester/services/domains.py`: RDAP availability check (parallel, error par kabhi "available" nahi dikhata)
 - `suggester/services/pipeline.py`: poora flow + scoring
-- `config/settings.py` ke `NAME_SUGGESTER` dict mein TLDs, candidate count, workers
+- `suggester/static/suggester/`: CSS aur JS (shortlist, filter, loading state)
 
 ## Aage ke steps
 1. Search ko Celery + Redis par shift karna (abhi request ke andar sync chalta hai)
-2. Registrar API (Porkbun/GoDaddy/Namecheap) se final availability + price + buy link
-3. Social handle aur trademark pre-check
-4. Birth time/place se Nakshatra aur lucky letters (`pyswisseph`)
+2. Registrar API (Porkbun/GoDaddy/Namecheap) se final availability + price
+3. Birth time/place se Nakshatra aur lucky letters (`pyswisseph`)
+4. Hindi (Devanagari) interface

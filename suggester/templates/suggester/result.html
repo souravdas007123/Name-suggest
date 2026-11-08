@@ -12,14 +12,20 @@
   <div><dt>Sun sign</dt><dd>{{ profile.sun_sign }}</dd></div>
   <div>
     <dt>Anukul naam-ank</dt>
-    <dd class="digits">{% for n in profile.allowed_sorted %}<span class="ring sm">{{ n }}</span>{% endfor %}</dd>
+    <dd class="digits">{% for n, strong in profile.allowed_marked %}<span class="ring sm{% if strong %} strong{% endif %}">{{ n }}</span>{% endfor %}</dd>
+    {% if profile.strong_numbers %}<small class="small">Bhare ring Bhagyank se bhi match karte hain</small>{% endif %}
   </div>
 </dl>
 
 {% if rows %}
 <div class="toolbar">
   <label class="switch"><input type="checkbox" id="only-available"> Sirf wahi jinka .com khaali hai</label>
-  <a class="btn btn-ghost" href="{% url 'home' %}">Nayi search</a>
+  <div class="toolbar-actions">
+    <button type="button" class="btn btn-ghost" data-copy="{{ share_url }}">Link copy karein</button>
+    <a class="btn btn-ghost" href="https://wa.me/?text={{ share_text|urlencode }}" target="_blank" rel="noopener noreferrer">WhatsApp par bhejein</a>
+    <button type="button" class="btn btn-ghost" data-print>PDF / print</button>
+    <a class="btn" href="{% url 'home' %}">Nayi search</a>
+  </div>
 </div>
 
 <ol class="ledger">
@@ -28,7 +34,7 @@
     <span class="ring" title="Naam-ank">{{ r.name_number }}</span>
     <div>
       <div class="name">{{ r.name }}{% if forloop.first %}<span class="best-tag">Sabse behtar</span>{% endif %}</div>
-      <div class="name-meta">Naam-ank {{ r.name_number }}, compound {{ r.compound_number }}, score {{ r.score }}</div>
+      <div class="name-meta">Naam-ank {{ r.name_number }}, compound {{ r.compound_number }}{% if r.strong %}, Bhagyank se bhi match{% endif %}, score {{ r.score }}</div>
     </div>
     <div class="domains">
       {% for domain, status in r.domains %}
@@ -40,15 +46,32 @@
           <span class="chip unknown" title="Status confirm nahi ho paya"><b>{{ domain }}</b><i>Confirm nahi</i></span>
         {% endif %}
       {% endfor %}
+      {% for domain, status in r.alt %}
+        <a class="chip available option" href="https://www.namecheap.com/domains/registration/results/?domain={{ domain }}" target="_blank" rel="noopener noreferrer" title="Registrar par dekhein"><b>{{ domain }}</b><i>Option, available</i></a>
+      {% endfor %}
     </div>
-    <button type="button" class="copy" data-copy="{{ r.name }}">Naam copy karein</button>
+    <div class="actions">
+      <button type="button" class="star" data-fav data-name="{{ r.name }}" data-domain="{% if r.alt %}{{ r.alt.0.0 }}{% else %}{{ r.primary_domain }}{% endif %}" data-number="{{ r.name_number }}" aria-pressed="false" aria-label="{{ r.name }} ko shortlist mein jodein">&#9734;</button>
+      <button type="button" class="copy" data-copy="{{ r.name }}">Naam copy karein</button>
+    </div>
+    <details class="more">
+      <summary>Social handle aur trademark check karein</summary>
+      <p class="small">Ye automatic check nahi hai. Link kholkar dekhein ki <b>{{ r.slug }}</b> khaali hai ya nahi.</p>
+      <div class="links">
+        <a href="https://www.instagram.com/{{ r.slug }}/" target="_blank" rel="noopener noreferrer">Instagram</a>
+        <a href="https://x.com/{{ r.slug }}" target="_blank" rel="noopener noreferrer">X</a>
+        <a href="https://www.youtube.com/@{{ r.slug }}" target="_blank" rel="noopener noreferrer">YouTube</a>
+        <a href="https://tmrsearch.ipindia.gov.in/tmrpublicsearch/" target="_blank" rel="noopener noreferrer">Trademark (India)</a>
+        <a href="https://branddb.wipo.int/" target="_blank" rel="noopener noreferrer">Trademark (WIPO)</a>
+      </div>
+    </details>
   </li>
   {% endfor %}
 </ol>
 {% else %}
 <div class="panel empty">
   <h2>Is baar koi naam pass nahi hua</h2>
-  <p>Jo naam aapke ank se mile, unke .com domain pehle se liye hue the. Alag shabd ya naam ka andaaz badal kar dobara khojein.</p>
+  <p>Jo naam aapke ank se mile, unke domain pehle se liye hue the. Alag shabd ya naam ka andaaz badal kar dobara khojein.</p>
   <a class="btn" href="{% url 'home' %}">Nayi search</a>
 </div>
 {% endif %}
