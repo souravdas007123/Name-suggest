@@ -13,7 +13,7 @@ RESULT_SALT = "naamastro-result"
 
 
 def _token_for(pk: int) -> str:
-    # Result URL guess nahi kiya ja sakta (DOB private rehti hai), lekin share kiya ja sakta hai.
+    # The result URL cannot be guessed (DOB stays private) but can still be shared.
     return signing.dumps(pk, salt=RESULT_SALT, compress=False)
 
 
@@ -21,7 +21,7 @@ def _pk_from(token: str) -> int:
     try:
         return int(signing.loads(token, salt=RESULT_SALT))
     except (signing.BadSignature, ValueError):
-        raise Http404("Result nahi mila")
+        raise Http404("Result not found")
 
 
 def home(request):
@@ -47,7 +47,7 @@ def home(request):
                 name=r.name,
                 name_number=r.name_number,
                 compound_number=r.compound_number,
-                # variations (.com taken hone par) bhi isi JSON mein, "alt" key ke neeche
+                # variations (when .com is taken) are stored in the same JSON under the "alt" key
                 domain_status={**r.domain_status, "alt": [list(a) for a in r.alt_domains]},
                 score=r.score,
             )
@@ -60,7 +60,7 @@ def home(request):
 def result(request, token):
     req = SearchRequest.objects.filter(pk=_pk_from(token)).first()
     if req is None:
-        raise Http404("Result nahi mila")
+        raise Http404("Result not found")
 
     profile = numerology.build_profile(req.dob)
     tlds = settings.NAME_SUGGESTER["TLDS"]
@@ -80,7 +80,7 @@ def result(request, token):
                 "strong": s.name_number in profile.strong_numbers,
                 "primary_status": status.get(primary, "unknown"),
                 "primary_domain": f"{slug}.{primary}",
-                # sirf wahi TLDs jo sach mein check hue the
+                # only the TLDs that were actually checked
                 "domains": [(f"{slug}.{t}", status[t]) for t in tlds if t in status],
                 "alt": [tuple(a) for a in status.get("alt", [])],
             }
@@ -95,6 +95,6 @@ def result(request, token):
             "profile": profile,
             "rows": rows,
             "share_url": share_url,
-            "share_text": f"Mere liye shubh company naam ({req.industry}): {share_url}",
+            "share_text": f"Lucky company names for my {req.industry} business: {share_url}",
         },
     )

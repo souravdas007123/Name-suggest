@@ -1,7 +1,7 @@
 (function () {
   var KEY = "naamastro.shortlist";
 
-  // ---- localStorage safe wrappers (private mode mein error aa sakta hai) ----
+  // ---- localStorage safe wrappers (these can throw in private mode) ----
   function load() {
     try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { return []; }
   }
@@ -9,7 +9,7 @@
     try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) { /* ignore */ }
   }
 
-  // 1) Form submit: button disable + progress bar (search mein kuch seconds lagte hain)
+  // 1) Form submit: disable the button and show a progress bar (the search takes a few seconds)
   var form = document.getElementById("search-form");
   if (form) {
     form.addEventListener("submit", function () {
@@ -18,12 +18,12 @@
       if (panel) panel.classList.add("is-loading");
       if (btn) {
         btn.disabled = true;
-        btn.textContent = "Domain check ho raha hai...";
+        btn.textContent = "Checking domains...";
       }
     });
   }
 
-  // 2) Result: sirf wahi naam dikhao jinka primary (.com) domain khaali hai
+  // 2) Result: show only names whose primary (.com) domain is free
   var toggle = document.getElementById("only-available");
   var rows = document.querySelectorAll("[data-primary]");
   var countEl = document.getElementById("shown-count");
@@ -39,13 +39,13 @@
     });
   }
 
-  // 3) Copy buttons (naam aur share link)
+  // 3) Copy buttons (name and share link)
   document.querySelectorAll("[data-copy]").forEach(function (btn) {
     btn.addEventListener("click", function () {
       var text = btn.getAttribute("data-copy");
       var done = function () {
         var old = btn.textContent;
-        btn.textContent = "Copy ho gaya";
+        btn.textContent = "Copied";
         btn.classList.add("done");
         setTimeout(function () { btn.textContent = old; btn.classList.remove("done"); }, 1600);
       };
@@ -60,7 +60,7 @@
     btn.addEventListener("click", function () { window.print(); });
   });
 
-  // 5) Shortlist (sirf is browser mein save hoti hai)
+  // 5) Shortlist (saved in this browser only)
   var panel = document.getElementById("shortlist");
   var listEl = document.getElementById("shortlist-list");
 
@@ -84,7 +84,7 @@
       var rm = document.createElement("button");
       rm.type = "button";
       rm.className = "copy";
-      rm.textContent = "Hatayein";
+      rm.textContent = "Remove";
       rm.addEventListener("click", function () { toggleFav(it); });
       li.appendChild(ring);
       li.appendChild(box);

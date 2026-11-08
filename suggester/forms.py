@@ -3,7 +3,7 @@ from datetime import date
 from django import forms
 
 TONES = [
-    ("", "Koi bhi"),
+    ("", "Any"),
     ("modern", "Modern"),
     ("traditional", "Traditional"),
     ("premium", "Premium"),
@@ -13,24 +13,24 @@ TONES = [
 
 class SearchForm(forms.Form):
     dob = forms.DateField(
-        label="Janm tarikh",
+        label="Date of birth",
         widget=forms.DateInput(attrs={"type": "date", "class": "input", "required": True}),
     )
     industry = forms.CharField(
-        label="Business ka kshetra",
+        label="Industry",
         max_length=100,
         widget=forms.TextInput(
-            attrs={"class": "input", "placeholder": "jaise food", "autocomplete": "off", "required": True}
+            attrs={"class": "input", "placeholder": "e.g. food", "autocomplete": "off", "required": True}
         ),
     )
     keywords = forms.CharField(
-        label="Pasand ke shabd (optional)",
+        label="Words you like (optional)",
         max_length=200,
         required=False,
         widget=forms.TextInput(attrs={"class": "input", "placeholder": "ganga, fresh", "autocomplete": "off"}),
     )
     tone = forms.ChoiceField(
-        label="Naam ka andaaz",
+        label="Name style",
         choices=TONES,
         required=False,
         initial="",
@@ -40,7 +40,7 @@ class SearchForm(forms.Form):
     def clean_dob(self):
         dob = self.cleaned_data["dob"]
         if dob > date.today() or dob.year < 1900:
-            raise forms.ValidationError("Sahi janm tarikh daalein.")
+            raise forms.ValidationError("Enter a valid date of birth.")
         return dob
 
     def clean_keywords(self):

@@ -2,18 +2,18 @@
 {% block content %}
 <section class="hero">
   <div class="hero-intro">
-    <h1>Shubh naam, jiska domain khaali ho.</h1>
-    <p class="lead">Janm tarikh aur business ka kshetra batayein. Hum aapke Moolank se match karte naam chunte hain aur har naam ka domain live check karte hain.</p>
+    <h1>Lucky company names with a free domain.</h1>
+    <p class="lead">Enter your date of birth and your industry. We pick names that match your birth number and check every domain live.</p>
   </div>
 
   <div class="hero-extra">
-    <div class="sample" aria-label="Result ka namuna">
-      <p class="small sample-label">Aisa dikhega result</p>
+    <div class="sample" aria-label="Example result">
+      <p class="small sample-label">Example result</p>
       <div class="ledger-row">
         <span class="ring" aria-hidden="true">6</span>
         <div>
           <div class="name">Vedalogic</div>
-          <div class="name-meta">Naam-ank 6, compound 33</div>
+          <div class="name-meta">Name number 6, compound 33</div>
         </div>
         <div class="domains">
           <span class="chip available"><b>vedalogic.com</b><i>Available</i></span>
@@ -23,40 +23,40 @@
     </div>
 
     <ol class="steps">
-      <li><div><strong>Moolank aur Bhagyank</strong><span class="small">Janm tarikh se aapke dono ank nikalte hain.</span></div></li>
-      <li><div><strong>Anukul naam-ank</strong><span class="small">Sirf wahi naam bachte hain jinka Chaldean ank aapse milta hai.</span></div></li>
-      <li><div><strong>Domain check</strong><span class="small">.com aur .in dono dekhe jaate hain. Jinka .com le liya gaya, wo hat jaate hain.</span></div></li>
+      <li><div><strong>Birth number and destiny number</strong><span class="small">We work out both from your date of birth.</span></div></li>
+      <li><div><strong>Matching name numbers</strong><span class="small">Only names whose Chaldean number suits yours are kept.</span></div></li>
+      <li><div><strong>Domain check</strong><span class="small">We check .com and other extensions. Names with a taken .com are dropped, unless a close variation is free.</span></div></li>
     </ol>
   </div>
 
   <div class="panel hero-form">
     <div class="progress" aria-hidden="true"></div>
-    <h2>Naam khojein</h2>
+    <h2>Find names</h2>
     <form method="post" id="search-form" novalidate>
       {% csrf_token %}
 
       <div class="field {% if form.dob.errors %}has-error{% endif %}">
-        <label for="{{ form.dob.id_for_label }}">Janm tarikh</label>
+        <label for="{{ form.dob.id_for_label }}">Date of birth</label>
         {{ form.dob }}
         {{ form.dob.errors }}
       </div>
 
       <div class="field {% if form.industry.errors %}has-error{% endif %}">
-        <label for="{{ form.industry.id_for_label }}">Business ka kshetra</label>
+        <label for="{{ form.industry.id_for_label }}">Industry</label>
         {{ form.industry }}
-        <span class="help">Jaise tech, food, education, fashion, finance</span>
+        <span class="help">For example: tech, food, education, fashion, finance</span>
         {{ form.industry.errors }}
       </div>
 
       <div class="field">
-        <label for="{{ form.keywords.id_for_label }}">Pasand ke shabd (optional)</label>
+        <label for="{{ form.keywords.id_for_label }}">Words you like (optional)</label>
         {{ form.keywords }}
-        <span class="help">Comma se alag karein, jaise ganga, fresh</span>
+        <span class="help">Separate with commas, for example: ganga, fresh</span>
         {{ form.keywords.errors }}
       </div>
 
       <div class="field" role="radiogroup" aria-labelledby="tone-legend">
-        <span class="legend" id="tone-legend">Naam ka andaaz</span>
+        <span class="legend" id="tone-legend">Name style</span>
         <div class="pills">
           {% for radio in form.tone %}
             <label class="pill">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
@@ -64,7 +64,7 @@
         </div>
       </div>
 
-      <button type="submit" class="btn btn-block">Naam khojo</button>
+      <button type="submit" class="btn btn-block">Find names</button>
     </form>
   </div>
 </section>
