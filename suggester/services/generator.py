@@ -1,10 +1,7 @@
-"""Candidate naam generation: rule-based (hamesha) + Claude API (agar key set ho)."""
+"""Candidate naam generation: poori tarah rule-based, koi paid API nahi."""
 from __future__ import annotations
 
-import json
-import os
 import random
-import re
 
 PREFIXES = ["Nova", "Zen", "Veda", "Arya", "Adi", "Neo", "Pra", "Sam", "Uday", "Ora", "Vyom",
             "Tej", "Sattva", "Kavi", "Lumi", "Alto", "Veer", "Ananta", "Dhruv", "Maitri"]
@@ -62,42 +59,5 @@ def rule_based_candidates(industry: str, keywords: list[str], count: int, seed: 
     return sorted(out)
 
 
-def llm_candidates(industry: str, keywords: list[str], tone: str, count: int, model: str) -> list[str]:
-    """Claude se naam maango. Key/SDK na ho ya error aaye to [] -- app phir bhi chalta rahe."""
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        return []
-    try:
-        import anthropic  # optional dependency
-    except ImportError:
-        return []
-    prompt = (
-        f"Suggest {count} short, brandable, pronounceable company names for a "
-        f"{industry} business. Tone: {tone or 'modern'}. "
-        f"Keywords/ideas: {', '.join(keywords) or 'none'}. "
-        "Rules: single word or fused compound, 4-12 letters, letters only, easy to spell, "
-        "likely to have a free .com domain (avoid common dictionary words). "
-        'Reply with ONLY a JSON array of strings.'
-    )
-    try:
-        client = anthropic.Anthropic()
-        msg = client.messages.create(
-            model=model, max_tokens=2000, messages=[{"role": "user", "content": prompt}]
-        )
-        text = "".join(b.text for b in msg.content if getattr(b, "type", "") == "text")
-        match = re.search(r"\[.*\]", text, re.S)
-        names = json.loads(match.group(0)) if match else []
-    except Exception:
-        return []
-    return [n.strip() for n in names if isinstance(n, str) and re.fullmatch(r"[A-Za-z]{3,14}", n.strip())]
-
-
-def generate_candidates(industry: str, keywords: list[str], tone: str, count: int, model: str) -> list[str]:
-    llm = llm_candidates(industry, keywords, tone, max(count // 2, 20), model)
-    rules = rule_based_candidates(industry, keywords, count)
-    seen, merged = set(), []
-    for n in llm + rules:  # LLM wale pehle (zyada creative)
-        k = n.lower()
-        if k not in seen:
-            seen.add(k)
-            merged.append(n)
-    return merged[: count + len(llm)]
+def generate_candidates(industry: str, keywords: list[str], tone: str, count: int) -> list[str]:
+    return rule_based_candidates(industry, keywords, count)

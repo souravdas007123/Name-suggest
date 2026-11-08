@@ -42,9 +42,7 @@ def run_search(
     profile = numerology.build_profile(dob)
     tlds = cfg["TLDS"]
 
-    candidates = generator.generate_candidates(
-        industry, keywords, tone, cfg["CANDIDATE_COUNT"], cfg["ANTHROPIC_MODEL"]
-    )
+    candidates = generator.generate_candidates(industry, keywords, tone, cfg["CANDIDATE_COUNT"])
     compatible = [n for n in candidates if numerology.is_compatible(n, profile)]
 
     statuses = check(

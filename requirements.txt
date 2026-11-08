@@ -1,4 +1,2 @@
 Django>=5.0,<6.0
 requests>=2.31
-# Optional: LLM based naam generation (ANTHROPIC_API_KEY set karne par use hoga)
-anthropic>=0.40

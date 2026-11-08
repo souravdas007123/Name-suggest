@@ -9,7 +9,7 @@ from suggester.services import domains, generator, numerology, pipeline
 
 CFG = {
     "TLDS": ["com", "in"], "CANDIDATE_COUNT": 80, "MAX_RESULTS": 10,
-    "DOMAIN_CHECK_WORKERS": 4, "DOMAIN_CHECK_TIMEOUT": 2, "ANTHROPIC_MODEL": "x",
+    "DOMAIN_CHECK_WORKERS": 4, "DOMAIN_CHECK_TIMEOUT": 2
 }
 
 
@@ -75,9 +75,10 @@ class GeneratorTests(unittest.TestCase):
         self.assertGreaterEqual(len(names), 30)
         self.assertEqual(len(names), len({n.lower() for n in names}))
 
-    def test_llm_skipped_without_key(self):
-        with mock.patch.dict("os.environ", {}, clear=True):
-            self.assertEqual(generator.llm_candidates("tech", [], "", 10, "m"), [])
+    def test_no_paid_api_used(self):
+        import inspect
+        src = inspect.getsource(generator)
+        self.assertNotIn("anthropic", src.lower())
 
 
 class PipelineTests(unittest.TestCase):

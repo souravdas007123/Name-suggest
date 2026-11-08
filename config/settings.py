@@ -69,5 +69,4 @@ NAME_SUGGESTER = {
     "MAX_RESULTS": 20,           # user ko kitne dikhane hain
     "DOMAIN_CHECK_WORKERS": 12,  # parallel RDAP checks
     "DOMAIN_CHECK_TIMEOUT": 6,   # seconds
-    "ANTHROPIC_MODEL": os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-5-5"),
 }

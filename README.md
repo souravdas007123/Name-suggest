@@ -10,7 +10,7 @@ python manage.py makemigrations suggester
 python manage.py migrate
 python manage.py runserver
 ```
-Optional: `export ANTHROPIC_API_KEY=...` set karein to Claude se bhi creative naam aayenge.
+Poora app free hai: koi paid API ya key nahi lagti.
 
 ## Tests (Django ke bina bhi chalte hain)
 ```bash
@@ -19,7 +19,7 @@ python -m unittest suggester.tests.test_services -v
 
 ## Structure
 - `suggester/services/numerology.py`: Chaldean number, Moolank/Bhagyank, compatibility table (**astrologer se verify karein**)
-- `suggester/services/generator.py`: rule-based + optional Claude naam
+- `suggester/services/generator.py`: poori tarah rule-based naam (koi paid API nahi)
 - `suggester/services/domains.py`: RDAP availability check (parallel, error par kabhi "available" nahi dikhata)
 - `suggester/services/pipeline.py`: poora flow + scoring
 - `config/settings.py` ke `NAME_SUGGESTER` dict mein TLDs, candidate count, workers
