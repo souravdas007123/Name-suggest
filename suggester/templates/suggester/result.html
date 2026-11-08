@@ -1,0 +1,25 @@
+{% extends "suggester/base.html" %}
+{% block content %}
+<h1>Aapke liye shubh naam</h1>
+<div class="card profile">
+  <span><b>Moolank:</b> {{ profile.moolank }} ({{ profile.moolank_planet }})</span>
+  <span><b>Bhagyank:</b> {{ profile.bhagyank }} ({{ profile.bhagyank_planet }})</span>
+  <span><b>Sun sign:</b> {{ profile.sun_sign }}</span><br>
+  <span class="help">Anukul naam-ank: {{ profile.allowed_sorted|join:", " }}</span>
+</div>
+
+{% for r in rows %}
+  <div class="card">
+    <div class="name">{{ r.name }}</div>
+    <div class="meta">Naam-ank {{ r.name_number }} (compound {{ r.compound_number }}) &middot; score {{ r.score }}</div>
+    {% for domain, status in r.domains %}
+      <span class="tag {{ status }}">{{ domain }} &middot; {{ status }}</span>
+    {% endfor %}
+  </div>
+{% empty %}
+  <div class="card">Is baar koi naam nahi mila jiska domain free ho. Alag keyword ya style ke saath dobara try karein.</div>
+{% endfor %}
+
+<a class="btn" href="{% url 'home' %}">Nayi search</a>
+<p class="note">"unknown" ka matlab hai domain status confirm nahi ho paya. Kharidne se pehle registrar par dobara check zaroor karein. Ye suggestions numerology par based margdarshan hain.</p>
+{% endblock %}
