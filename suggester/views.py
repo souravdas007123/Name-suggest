@@ -51,6 +51,7 @@ def result(request, pk):
                 "name_number": s.name_number,
                 "compound_number": s.compound_number,
                 "score": s.score,
+                "primary_status": s.domain_status.get(tlds[0], "unknown"),
                 "domains": [(f"{s.name.lower()}.{t}", s.domain_status.get(t, "unknown")) for t in tlds],
             }
         )

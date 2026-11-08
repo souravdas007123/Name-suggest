@@ -1,25 +1,55 @@
 {% extends "suggester/base.html" %}
+{% block title %}Aapke shubh naam | NaamAstro{% endblock %}
 {% block content %}
-<h1>Aapke liye shubh naam</h1>
-<div class="card profile">
-  <span><b>Moolank:</b> {{ profile.moolank }} ({{ profile.moolank_planet }})</span>
-  <span><b>Bhagyank:</b> {{ profile.bhagyank }} ({{ profile.bhagyank_planet }})</span>
-  <span><b>Sun sign:</b> {{ profile.sun_sign }}</span><br>
-  <span class="help">Anukul naam-ank: {{ profile.allowed_sorted|join:", " }}</span>
+<section class="result-head">
+  <h1>{% if rows %}<span id="shown-count">{{ rows|length }}</span> shubh naam mile{% else %}Koi naam nahi mila{% endif %}</h1>
+  <p class="lead">{{ req.industry|capfirst }} ke liye, janm tarikh {{ req.dob|date:"j N Y" }}.</p>
+</section>
+
+<dl class="profile">
+  <div><dt>Moolank</dt><dd>{{ profile.moolank }}<small>{{ profile.moolank_planet }}</small></dd></div>
+  <div><dt>Bhagyank</dt><dd>{{ profile.bhagyank }}<small>{{ profile.bhagyank_planet }}</small></dd></div>
+  <div><dt>Sun sign</dt><dd>{{ profile.sun_sign }}</dd></div>
+  <div>
+    <dt>Anukul naam-ank</dt>
+    <dd class="digits">{% for n in profile.allowed_sorted %}<span class="ring sm">{{ n }}</span>{% endfor %}</dd>
+  </div>
+</dl>
+
+{% if rows %}
+<div class="toolbar">
+  <label class="switch"><input type="checkbox" id="only-available"> Sirf wahi jinka .com khaali hai</label>
+  <a class="btn btn-ghost" href="{% url 'home' %}">Nayi search</a>
 </div>
 
-{% for r in rows %}
-  <div class="card">
-    <div class="name">{{ r.name }}</div>
-    <div class="meta">Naam-ank {{ r.name_number }} (compound {{ r.compound_number }}) &middot; score {{ r.score }}</div>
-    {% for domain, status in r.domains %}
-      <span class="tag {{ status }}">{{ domain }} &middot; {{ status }}</span>
-    {% endfor %}
-  </div>
-{% empty %}
-  <div class="card">Is baar koi naam nahi mila jiska domain free ho. Alag keyword ya style ke saath dobara try karein.</div>
-{% endfor %}
-
-<a class="btn" href="{% url 'home' %}">Nayi search</a>
-<p class="note">"unknown" ka matlab hai domain status confirm nahi ho paya. Kharidne se pehle registrar par dobara check zaroor karein. Ye suggestions numerology par based margdarshan hain.</p>
+<ol class="ledger">
+  {% for r in rows %}
+  <li class="ledger-row {% if forloop.first %}is-best{% endif %}" data-primary="{{ r.primary_status }}">
+    <span class="ring" title="Naam-ank">{{ r.name_number }}</span>
+    <div>
+      <div class="name">{{ r.name }}{% if forloop.first %}<span class="best-tag">Sabse behtar</span>{% endif %}</div>
+      <div class="name-meta">Naam-ank {{ r.name_number }}, compound {{ r.compound_number }}, score {{ r.score }}</div>
+    </div>
+    <div class="domains">
+      {% for domain, status in r.domains %}
+        {% if status == "available" %}
+          <a class="chip available" href="https://www.namecheap.com/domains/registration/results/?domain={{ domain }}" target="_blank" rel="noopener noreferrer" title="Registrar par dekhein"><b>{{ domain }}</b><i>Available</i></a>
+        {% elif status == "taken" %}
+          <span class="chip taken"><b>{{ domain }}</b><i>Taken</i></span>
+        {% else %}
+          <span class="chip unknown" title="Status confirm nahi ho paya"><b>{{ domain }}</b><i>Confirm nahi</i></span>
+        {% endif %}
+      {% endfor %}
+    </div>
+    <button type="button" class="copy" data-copy="{{ r.name }}">Naam copy karein</button>
+  </li>
+  {% endfor %}
+</ol>
+{% else %}
+<div class="panel empty">
+  <h2>Is baar koi naam pass nahi hua</h2>
+  <p>Jo naam aapke ank se mile, unke .com domain pehle se liye hue the. Alag shabd ya naam ka andaaz badal kar dobara khojein.</p>
+  <a class="btn" href="{% url 'home' %}">Nayi search</a>
+</div>
+{% endif %}
 {% endblock %}

@@ -4,35 +4,43 @@ from django import forms
 
 TONES = [
     ("", "Koi bhi"),
-    ("modern", "Modern / techy"),
-    ("traditional", "Traditional / Indian"),
-    ("premium", "Premium / luxury"),
-    ("playful", "Playful / friendly"),
+    ("modern", "Modern"),
+    ("traditional", "Traditional"),
+    ("premium", "Premium"),
+    ("playful", "Playful"),
 ]
 
 
 class SearchForm(forms.Form):
     dob = forms.DateField(
-        label="Aapki Date of Birth",
-        widget=forms.DateInput(attrs={"type": "date"}),
+        label="Janm tarikh",
+        widget=forms.DateInput(attrs={"type": "date", "class": "input", "required": True}),
     )
     industry = forms.CharField(
-        label="Company kis field mein hai?",
+        label="Business ka kshetra",
         max_length=100,
-        help_text="Jaise: tech, food, education, fashion, finance",
+        widget=forms.TextInput(
+            attrs={"class": "input", "placeholder": "jaise food", "autocomplete": "off", "required": True}
+        ),
     )
     keywords = forms.CharField(
-        label="Koi shabd / idea (optional)",
+        label="Pasand ke shabd (optional)",
         max_length=200,
         required=False,
-        help_text="Comma se alag karein: jaise 'ganga, fresh'",
+        widget=forms.TextInput(attrs={"class": "input", "placeholder": "ganga, fresh", "autocomplete": "off"}),
     )
-    tone = forms.ChoiceField(label="Naam ka style", choices=TONES, required=False)
+    tone = forms.ChoiceField(
+        label="Naam ka andaaz",
+        choices=TONES,
+        required=False,
+        initial="",
+        widget=forms.RadioSelect,
+    )
 
     def clean_dob(self):
         dob = self.cleaned_data["dob"]
         if dob > date.today() or dob.year < 1900:
-            raise forms.ValidationError("Sahi date of birth daaliye.")
+            raise forms.ValidationError("Sahi janm tarikh daalein.")
         return dob
 
     def clean_keywords(self):

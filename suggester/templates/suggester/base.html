@@ -1,25 +1,32 @@
-<!doctype html>
+{% load static %}<!doctype html>
 <html lang="hi">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}NaamAstro{% endblock %}</title>
-  <style>
-    :root { --ink:#1f2330; --muted:#6b7280; --line:#e5e7eb; --accent:#5b3fd1; --ok:#117a45; --bad:#b42318; --warn:#9a6700; }
-    * { box-sizing: border-box; }
-    body { font-family: system-ui, sans-serif; color: var(--ink); margin: 0; background: #faf9ff; }
-    main { max-width: 760px; margin: 0 auto; padding: 32px 20px 64px; }
-    h1 { margin: 0 0 4px; } .sub { color: var(--muted); margin: 0 0 24px; }
-    form p { margin: 0 0 16px; } label { display: block; font-weight: 600; margin-bottom: 4px; }
-    input, select { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 16px; }
-    .help { color: var(--muted); font-size: 13px; } .errorlist { color: var(--bad); padding-left: 18px; margin: 4px 0; }
-    button, .btn { background: var(--accent); color: #fff; border: 0; border-radius: 8px; padding: 12px 20px; font-size: 16px; cursor: pointer; text-decoration: none; display: inline-block; }
-    .card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
-    .profile span { margin-right: 18px; } .tag { font-size: 13px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); margin-right: 6px; }
-    .available { color: var(--ok); border-color: var(--ok); } .taken { color: var(--bad); border-color: var(--bad); } .unknown { color: var(--warn); border-color: var(--warn); }
-    .name { font-size: 22px; font-weight: 700; } .meta { color: var(--muted); font-size: 14px; margin: 4px 0 8px; }
-    .note { color: var(--muted); font-size: 13px; margin-top: 24px; }
-  </style>
+  <title>{% block title %}NaamAstro: shubh company naam, domain ke saath{% endblock %}</title>
+  <meta name="description" content="Janm tarikh aur business ke hisaab se numerology-anukul company naam, har naam ka domain live check ke saath.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'suggester/app.css' %}">
 </head>
-<body><main>{% block content %}{% endblock %}</main></body>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="{% url 'home' %}"><span class="brand-mark" aria-hidden="true">N</span>NaamAstro</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div class="wrap">
+      <p class="small">Ye suggestions numerology par based margdarshan hain. Domain ka status RDAP se live check hota hai, kharidne se pehle registrar par dobara confirm karein.</p>
+    </div>
+  </footer>
+
+  <script src="{% static 'suggester/app.js' %}" defer></script>
+</body>
 </html>
