@@ -5,7 +5,7 @@ from unittest import mock
 
 import requests
 
-from suggester.services import domains, generator, numerology, pipeline
+from suggester.services import conflicts, domains, generator, numerology, pipeline
 
 CFG = {
     "TLDS": ["com", "in"], "CANDIDATE_COUNT": 80, "MAX_RESULTS": 10,
@@ -56,10 +56,17 @@ class DomainTests(unittest.TestCase):
         return r
 
     def test_404_available_200_taken(self):
-        with mock.patch.object(requests, "get", return_value=self._resp(404)):
+        with mock.patch.object(requests, "get", return_value=self._resp(404)), \
+             mock.patch.object(domains.socket, "gethostbyname", side_effect=OSError):
             self.assertEqual(domains.check_domain("zzqxnova.com"), domains.AVAILABLE)
         with mock.patch.object(requests, "get", return_value=self._resp(200)):
             self.assertEqual(domains.check_domain("google.com"), domains.TAKEN)
+
+    def test_404_but_dns_resolves_is_taken(self):
+        # rdap.org kuch extensions ke liye galat 404 de sakta hai
+        with mock.patch.object(requests, "get", return_value=self._resp(404)), \
+             mock.patch.object(domains.socket, "gethostbyname", return_value="1.2.3.4"):
+            self.assertEqual(domains.check_domain("example.co"), domains.TAKEN)
 
     def test_network_error_never_reports_available(self):
         with mock.patch.object(requests, "get", side_effect=requests.ConnectionError), \
@@ -76,6 +83,52 @@ class DomainTests(unittest.TestCase):
 
     def test_slugify(self):
         self.assertEqual(domains.slugify("Nova Tech!"), "novatech")
+
+
+class ConflictTests(unittest.TestCase):
+    @staticmethod
+    def run_check(statuses, wiki=None, live=()):
+        by_domain = dict(statuses)
+        return conflicts.check_conflicts(
+            "Zenora", "zenora",
+            check=lambda d: by_domain.get(d, domains.AVAILABLE),
+            wiki=lambda n, s: wiki,
+            live=lambda d: d in live,
+        )
+
+    def test_wikipedia_is_high(self):
+        r = self.run_check({}, wiki={"title": "Zenora", "url": "https://en.wikipedia.org/wiki/Zenora"})
+        self.assertEqual(r["level"], conflicts.HIGH)
+
+    def test_live_site_is_medium(self):
+        r = self.run_check({"zenora.net": domains.TAKEN}, live={"zenora.net"})
+        self.assertEqual(r["level"], conflicts.MEDIUM)
+        self.assertEqual(r["live_sites"], ["zenora.net"])
+
+    def test_registered_without_site_is_low(self):
+        r = self.run_check({"zenora.org": domains.TAKEN})
+        self.assertEqual(r["level"], conflicts.LOW)
+        self.assertEqual(r["registered"], ["zenora.org"])
+
+    def test_nothing_found_is_none_and_unknown_is_ignored(self):
+        r = self.run_check({"zenora.io": domains.UNKNOWN})
+        self.assertEqual(r["level"], conflicts.NONE)
+        self.assertEqual(r["registered"], [])
+
+    def test_wikipedia_match_title_with_suffix(self):
+        resp = mock.Mock()
+        resp.json.return_value = ["Zenora", ["Zenora (company)", "Other"], ["", ""], ["https://w/Z", "https://w/O"]]
+        with mock.patch.object(conflicts.requests, "get", return_value=resp):
+            self.assertEqual(conflicts.wikipedia_match("Zenora", "zenora")["title"], "Zenora (company)")
+            self.assertIsNone(conflicts.wikipedia_match("Zenor", "zenor"))
+
+    def test_wikipedia_errors_return_none(self):
+        with mock.patch.object(conflicts.requests, "get", side_effect=requests.ConnectionError):
+            self.assertIsNone(conflicts.wikipedia_match("Zenora", "zenora"))
+
+    def test_live_site_handles_errors(self):
+        with mock.patch.object(conflicts.requests, "get", side_effect=requests.Timeout):
+            self.assertFalse(conflicts.live_site("zenora.net"))
 
 
 class GeneratorTests(unittest.TestCase):

@@ -41,19 +41,25 @@ def check_domain(domain: str, timeout: int = 6, session: requests.Session | None
     except requests.RequestException:
         return _dns_fallback(domain)
     if resp.status_code == 404:
-        return AVAILABLE
+        # rdap.org un extensions ke liye bhi 404 de sakta hai jinka RDAP server nahi milta,
+        # isliye "available" tabhi maanein jab DNS bhi resolve na ho.
+        return TAKEN if _resolves(domain) else AVAILABLE
     if resp.status_code == 200:
         return TAKEN
     return _dns_fallback(domain)
 
 
-def _dns_fallback(domain: str) -> str:
-    """RDAP fail hone par: DNS resolve hota hai to pakka taken, warna unknown."""
+def _resolves(domain: str) -> bool:
     try:
         socket.gethostbyname(domain)
-        return TAKEN
+        return True
     except OSError:
-        return UNKNOWN
+        return False
+
+
+def _dns_fallback(domain: str) -> str:
+    """RDAP fail hone par: DNS resolve hota hai to pakka taken, warna unknown."""
+    return TAKEN if _resolves(domain) else UNKNOWN
 
 
 def check_domains(domain_list: Iterable[str], workers: int = 12, timeout: int = 6) -> dict[str, str]:
@@ -64,3 +70,11 @@ def check_domains(domain_list: Iterable[str], workers: int = 12, timeout: int = 
     with ThreadPoolExecutor(max_workers=workers) as pool:
         statuses = list(pool.map(lambda d: check_domain(d, timeout=timeout), unique))
     return dict(zip(unique, statuses))
+
+
+if __name__ == "__main__":
+    # Quick manual test: python suggester/services/domains.py google.com google.co example.app
+    import sys
+
+    for d in sys.argv[1:] or ["google.com", "google.in", "google.co", "google.app"]:
+        print(f"{d:30s} {check_domain(d)}")

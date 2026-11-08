@@ -112,5 +112,114 @@
       toggleFav({ name: b.dataset.name, domain: b.dataset.domain, number: b.dataset.number });
     });
   });
+  // 6) Conflict check: on demand, one name at a time (keeps the main search fast)
+  var RISK_LABELS = {
+    high: "Possible well-known brand",
+    medium: "Existing website found",
+    low: "Similar domains registered",
+    none: "No conflict signals found"
+  };
+  var CHECK_LABEL = "Check for existing businesses";
+
+  function node(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text) n.textContent = text;
+    return n;
+  }
+  function link(href, text) {
+    var a = node("a", "", text);
+    a.href = href;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    return a;
+  }
+  function line(prefix, items) {
+    var p = node("p", "", prefix + " ");
+    items.forEach(function (a, i) {
+      if (i) p.appendChild(document.createTextNode(", "));
+      p.appendChild(a);
+    });
+    return p;
+  }
+
+  function showConflict(row, d) {
+    var slot = row.querySelector(".risk-slot");
+    var out = row.querySelector(".conflict-result");
+    var btn = row.querySelector("[data-conflict]");
+    slot.textContent = "";
+    slot.appendChild(node("span", "risk risk-" + d.level, RISK_LABELS[d.level] || RISK_LABELS.none));
+    out.textContent = "";
+    if (d.wikipedia && /^https:\/\//.test(d.wikipedia.url)) {
+      out.appendChild(line("Wikipedia has a page called", [link(d.wikipedia.url, d.wikipedia.title)]));
+    }
+    if (d.live_sites && d.live_sites.length) {
+      out.appendChild(line("A website responds at", d.live_sites.map(function (x) { return link("https://" + x, x); })));
+    }
+    var quiet = (d.registered || []).filter(function (x) { return (d.live_sites || []).indexOf(x) < 0; });
+    if (quiet.length) {
+      out.appendChild(node("p", "", "Registered, but no website responded: " + quiet.join(", ")));
+    }
+    if (d.level === "none") {
+      out.appendChild(node("p", "", "We found no existing website or Wikipedia page with this name."));
+    }
+    out.appendChild(node("p", "", "These are signals only, not proof. Always search trademarks too."));
+    if (btn) { btn.textContent = "Checked"; btn.disabled = true; }
+  }
+
+  function runConflict(row) {
+    var url = row.dataset.conflictUrl;
+    var state = row.dataset.conflictState;
+    if (!url || state === "done" || state === "loading") return Promise.resolve();
+    row.dataset.conflictState = "loading";
+    var btn = row.querySelector("[data-conflict]");
+    var out = row.querySelector(".conflict-result");
+    if (btn) { btn.disabled = true; btn.textContent = "Checking..."; }
+    return fetch(url, { headers: { "Accept": "application/json" } })
+      .then(function (r) { if (!r.ok) throw new Error("status " + r.status); return r.json(); })
+      .then(function (d) { row.dataset.conflictState = "done"; showConflict(row, d); })
+      .catch(function () {
+        row.dataset.conflictState = "";
+        var slot = row.querySelector(".risk-slot");
+        if (slot) {
+          slot.textContent = "";
+          slot.appendChild(node("span", "risk risk-none", "Could not check. Open this row to retry."));
+        }
+        if (out) out.textContent = "Could not check right now. Try again.";
+        if (btn) { btn.disabled = false; btn.textContent = CHECK_LABEL; }
+      });
+  }
+
+  document.querySelectorAll("[data-conflict]").forEach(function (b) {
+    b.addEventListener("click", function () { runConflict(b.closest("[data-conflict-url]")); });
+  });
+
+  var checkAll = document.getElementById("check-all");
+  if (checkAll) {
+    var ALL_LABEL = checkAll.textContent;
+    checkAll.addEventListener("click", function () {
+      var pending = Array.prototype.filter.call(
+        document.querySelectorAll("[data-conflict-url]"),
+        function (r) { return r.dataset.conflictState !== "done" && !r.hidden; }
+      );
+      var total = pending.length, finished = 0, i = 0;
+      if (!total) return;
+      checkAll.disabled = true;
+      checkAll.textContent = "Checked 0 of " + total;
+      function next() {
+        if (i >= total) return Promise.resolve();
+        return runConflict(pending[i++]).then(function () {
+          finished++;
+          checkAll.textContent = "Checked " + finished + " of " + total;
+          return next();
+        });
+      }
+      Promise.all([next(), next()]).then(function () {
+        checkAll.disabled = false;
+        checkAll.textContent = ALL_LABEL;
+      });
+    });
+  }
+
   renderShortlist();
 })();

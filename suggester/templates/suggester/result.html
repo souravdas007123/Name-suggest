@@ -23,6 +23,7 @@
   <div class="toolbar-actions">
     <button type="button" class="btn btn-ghost" data-copy="{{ share_url }}">Copy link</button>
     <a class="btn btn-ghost" href="https://wa.me/?text={{ share_text|urlencode }}" target="_blank" rel="noopener noreferrer">Share on WhatsApp</a>
+    <button type="button" class="btn btn-ghost" id="check-all" title="Looks for existing businesses with the same name">Check all for conflicts</button>
     <button type="button" class="btn btn-ghost" data-print>Save as PDF</button>
     <a class="btn" href="{% url 'home' %}">New search</a>
   </div>
@@ -30,11 +31,12 @@
 
 <ol class="ledger">
   {% for r in rows %}
-  <li class="ledger-row {% if forloop.first %}is-best{% endif %}" data-primary="{{ r.primary_status }}">
+  <li class="ledger-row {% if forloop.first %}is-best{% endif %}" data-primary="{{ r.primary_status }}" data-conflict-url="{% url 'conflicts' token r.slug %}">
     <span class="ring" title="Name number">{{ r.name_number }}</span>
     <div>
       <div class="name">{{ r.name }}{% if forloop.first %}<span class="best-tag">Best match</span>{% endif %}</div>
       <div class="name-meta">Name number {{ r.name_number }}, compound {{ r.compound_number }}{% if r.strong %}, also matches destiny number{% endif %}, score {{ r.score }}</div>
+      <div class="risk-slot" aria-live="polite"></div>
     </div>
     <div class="domains">
       {% for domain, status in r.domains %}
@@ -55,8 +57,12 @@
       <button type="button" class="copy" data-copy="{{ r.name }}">Copy name</button>
     </div>
     <details class="more">
-      <summary>Check social handles and trademarks</summary>
-      <p class="small">These are not automatic checks. Open each link and see whether <b>{{ r.slug }}</b> is free.</p>
+      <summary>Check conflicts, social handles and trademarks</summary>
+      <div class="conflict">
+        <button type="button" class="copy" data-conflict>Check for existing businesses</button>
+        <div class="conflict-result small" aria-live="polite"></div>
+      </div>
+      <p class="small">Social and trademark checks are not automatic. Open each link and see whether <b>{{ r.slug }}</b> is free.</p>
       <div class="links">
         <a href="https://www.instagram.com/{{ r.slug }}/" target="_blank" rel="noopener noreferrer">Instagram</a>
         <a href="https://x.com/{{ r.slug }}" target="_blank" rel="noopener noreferrer">X</a>

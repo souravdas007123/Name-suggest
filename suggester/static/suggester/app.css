@@ -249,3 +249,18 @@ a.chip.available:hover { background: #cfeee5; }
   a.chip { text-decoration: none; }
   .footer { padding-top: 16px; }
 }
+
+/* ---------- conflict check ---------- */
+.risk-slot { margin-top: 6px; }
+.risk-slot:empty { display: none; }
+.risk { display: inline-block; font-size: 0.8rem; font-weight: 600; padding: 2px 10px; border-radius: 999px; }
+.risk-high { background: var(--brick-wash); color: var(--brick); }
+.risk-medium { background: var(--amber-wash); color: var(--amber); }
+.risk-low { background: var(--mist); color: var(--ink); border: 1px solid var(--line); }
+.risk-none { background: var(--mist); color: var(--ink-soft); border: 1px solid var(--line); }
+.conflict { margin: 4px 0 10px; }
+.conflict .copy[disabled] { cursor: default; opacity: 0.7; }
+.conflict-result { margin-top: 8px; max-width: 70ch; }
+.conflict-result p { margin: 0 0 4px; }
+.conflict-result a { text-decoration: underline; }
+@media print { .conflict .copy { display: none; } .risk-slot { display: block; } }

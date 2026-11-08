@@ -1,10 +1,12 @@
 from django.conf import settings
 from django.core import signing
-from django.http import Http404
+from django.core.cache import cache
+from django.http import Http404, JsonResponse
 from django.shortcuts import redirect, render
 
 from .forms import SearchForm
 from .models import NameSuggestion, SearchRequest
+from .services import conflicts as conflict_service
 from .services import numerology
 from .services.domains import slugify
 from .services.pipeline import run_search
@@ -94,7 +96,26 @@ def result(request, token):
             "req": req,
             "profile": profile,
             "rows": rows,
+            "token": token,
             "share_url": share_url,
             "share_text": f"Lucky company names for my {req.industry} business: {share_url}",
         },
     )
+
+
+def conflicts(request, token, slug):
+    """JSON: existing-business signals for one name. Called on demand from the result page."""
+    req = SearchRequest.objects.filter(pk=_pk_from(token)).first()
+    if req is None:
+        raise Http404("Result not found")
+    # Only names that belong to this result can be checked (this is not an open lookup service).
+    match = next((s for s in req.suggestions.all() if slugify(s.name) == slug), None)
+    if match is None:
+        raise Http404("Name not found")
+
+    key = f"conflicts:{slug}"
+    data = cache.get(key)
+    if data is None:
+        data = conflict_service.check_conflicts(match.name, slug)
+        cache.set(key, data, 60 * 60 * 24)
+    return JsonResponse(data)
